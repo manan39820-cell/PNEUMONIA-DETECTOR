@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Pneumonia Detection Model</title>
+  <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@latest"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@teachablemachine/image@latest"></script>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      text-align: center;
+      margin-top: 40px;
+    }
+    #preview {
+      max-width: 300px;
+      margin: 20px auto;
+      display: block;
+    }
+    #label-container div {
+      margin: 5px 0;
+      font-size: 18px;
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body onload="init()">
+
+  <h1>Pneumonia Detection</h1>
+  <p>Upload a chest X-ray image to check prediction:</p>
+
+  <input type="file" accept="image/*" onchange="predictImage(event)">
+  <br>
+  <img id="preview" alt="Uploaded Image Preview" />
+  <div id="label-container"></div>
+
+  <script type="text/javascript">
+    const URL = "./"; // current folder
+    let model, maxPredictions, labelContainer;
+
+    async function init() {
+      const modelURL = URL + "model/model.json";
+      const metadataURL = URL + "metadata/metadata.json";
+
+      model = await tmImage.load(modelURL, metadataURL);
+      maxPredictions = model.getTotalClasses();
+
+      labelContainer = document.getElementById("label-container");
+      labelContainer.innerHTML = "";
+      for (let i = 0; i < maxPredictions; i++) {
+        labelContainer.appendChild(document.createElement("div"));
+      }
+    }
+
+    async function predict(image) {
+      const prediction = await model.predict(image);
+      prediction.forEach((p, i) => {
+        labelContainer.childNodes[i].innerHTML =
+          ${p.className}: ${(p.probability * 100).toFixed(2)}%;
+      });
+    }
+
+    async function predictImage(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+
+      const img = document.getElementById("preview");
+      img.src = URL.createObjectURL(file);
+      img.onload = async () => {
+        await predict(img);
+      };
+    }
+  </script>
+</body>
+</html>
